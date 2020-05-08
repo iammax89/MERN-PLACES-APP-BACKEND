@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 const placesRoutes = require("./routes/places-routes");
 const usersRoutes = require("./routes/users-routes");
 
@@ -21,6 +22,14 @@ app.use((error, req, res, next) => {
     .status(error.code || 500)
     .json({ message: error.message || "An unknown error occured." });
 });
-app.listen(5000, () => {
-  console.log("Port started at posrt 5000");
-});
+const mongodbPass = "bW4feZsaSR9nw9eQ";
+mongoose
+  .connect(
+    `mongodb+srv://Malyshko:${mongodbPass}@cluster0-qly8b.mongodb.net/test?retryWrites=true&w=majority`
+  )
+  .then(() =>
+    app.listen(5000, () => {
+      console.log("Port started at posrt 5000");
+    })
+  )
+  .catch((err) => console.log(err));
