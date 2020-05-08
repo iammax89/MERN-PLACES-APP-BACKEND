@@ -1,63 +1,85 @@
-const uuid = require("uuid");
 const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
+const User = require("../models/user");
 
-const USERS = [
-  {
-    id: "u1",
-    name: "Muhammad Ali",
-    image:
-      "https://inspirationfeed.com/wp-content/uploads/2019/07/Muhammad-Ali-Quotes.jpeg",
-    places: 23,
-    email: "muhammad@gmail.com",
-    password: "text",
-  },
-];
-
-const getUsers = (req, res, next) => {
-  if (USERS.length) {
-    res.json({ users: USERS });
-  } else {
-    const error = new HttpError("No users found", 404);
+const getUsers = async (req, res, next) => {
+  let users;
+  try {
+    users = await User.find({}, "-password");
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching users failed. Please try again latter.",
+      500
+    );
     return next(error);
   }
+  res.json({ users: users.map((user) => user.toObject({ getters: true })) });
 };
 
-const createUser = (req, res, next) => {
+const createUser = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     console.log(errors);
-    throw new HttpError(
+    const error = new HttpError(
       "Name is required. Email address mush be in appropriate format. Password must contains at least 6 characters.",
       422
     );
+    return next(error);
   }
   const { name, email, password } = req.body;
-  const alreadyUser = USERS.find((user) => user.email === email);
+  let alreadyUser;
+  try {
+    alreadyUser = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError(
+      "Sign up failed. Please try again latter.",
+      500
+    );
+    return next(error);
+  }
   if (alreadyUser) {
     const error = new HttpError(
-      "Could not create new user, email already exists",
+      "User exists already. Please login instead.",
       422
     );
     return next(error);
   }
-  const newUser = {
-    id: uuid.v4(),
+  const newUser = new User({
     name,
+    imageUrl:
+      "https://inspirationfeed.com/wp-content/uploads/2019/07/Muhammad-Ali-Quotes.jpeg",
+    places: [],
     email,
     password,
-  };
-  USERS.push(newUser);
-  res.status(201).json({ user: newUser });
-};
+  });
 
-const login = (req, res, next) => {
-  const { email, password } = req.body;
-  const user = USERS.find((user) => user.email === email);
-  if (!user || user.password !== password) {
-    const error = new HttpError("Could not identify user", 401);
+  try {
+    await newUser.save();
+  } catch (err) {
+    const error = new HttpError("Could not create new user", 500);
     return next(error);
   }
+  res.status(201).json({ user: newUser.toObject({ getters: true }) });
+};
+
+const login = async (req, res, next) => {
+  const { email, password } = req.body;
+
+  let user;
+  try {
+    user = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError(
+      "Sign in failed. Please try again latter.",
+      500
+    );
+    return next(error);
+  }
+  if (!user || user.password !== password) {
+    const error = new HttpError("Invalid credetials, could not log in.", 401);
+    return next(error);
+  }
+
   res.json({ message: "Logged in!" });
 };
 
