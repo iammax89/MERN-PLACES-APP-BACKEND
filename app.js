@@ -8,6 +8,15 @@ const HttpError = require("./models/http-error");
 
 const app = express();
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+  next();
+});
 app.use("/api/places", placesRoutes);
 app.use("/api/users", usersRoutes);
 app.use((req, res, next) => {
@@ -25,7 +34,7 @@ app.use((error, req, res, next) => {
 const mongodbPass = "bW4feZsaSR9nw9eQ";
 mongoose
   .connect(
-    `mongodb+srv://Malyshko:${mongodbPass}@cluster0-qly8b.mongodb.net/test?retryWrites=true&w=majority`
+    `mongodb+srv://Malyshko:${mongodbPass}@cluster0-qly8b.mongodb.net/places-app?retryWrites=true&w=majority`
   )
   .then(() =>
     app.listen(5000, () => {

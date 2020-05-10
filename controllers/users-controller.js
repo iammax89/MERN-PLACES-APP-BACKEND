@@ -80,7 +80,7 @@ const login = async (req, res, next) => {
     return next(error);
   }
 
-  res.json({ message: "Logged in!" });
+  res.json({ user: user.toObject({ getters: true }) });
 };
 
 exports.getUsers = getUsers;
