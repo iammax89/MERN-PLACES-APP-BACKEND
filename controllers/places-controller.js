@@ -1,3 +1,4 @@
+const fs = require("fs");
 const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
@@ -58,7 +59,7 @@ const addPlace = async (req, res, next) => {
   if (!errors.isEmpty()) {
     console.log(errors);
     const error = new HttpError(
-      "Title, address fields are required. Describtion should contain at least 6 characters.",
+      "Title, address and image fields are required. Describtion should contain at least 6 characters.",
       422
     );
     return next(error);
@@ -77,8 +78,7 @@ const addPlace = async (req, res, next) => {
     address,
     creator,
     location,
-    imageUrl:
-      "https://cdn.britannica.com/36/162636-050-932C5D49/Colosseum-Rome-Italy.jpg",
+    imageUrl: req.file.path,
   });
   let user;
   try {
@@ -155,6 +155,8 @@ const deletePlace = async (req, res, next) => {
     );
     return next(error);
   }
+
+  const imagePath = place.imageUrl;
   try {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -166,7 +168,9 @@ const deletePlace = async (req, res, next) => {
     const error = new HttpError("Could not delete.", 500);
     return next(error);
   }
-
+  fs.unlink(imagePath, (err) => {
+    console.log(err);
+  });
   res.status(200).json({ message: "Deleted" });
 };
 exports.getPlaceById = getPlaceById;

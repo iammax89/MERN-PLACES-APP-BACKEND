@@ -21,7 +21,7 @@ const createUser = async (req, res, next) => {
   if (!errors.isEmpty()) {
     console.log(errors);
     const error = new HttpError(
-      "Name is required. Email address mush be in appropriate format. Password must contains at least 6 characters.",
+      "Name and Image fields are required. Email address mush be in appropriate format. Password must contains at least 6 characters.",
       422
     );
     return next(error);
@@ -46,8 +46,7 @@ const createUser = async (req, res, next) => {
   }
   const newUser = new User({
     name,
-    imageUrl:
-      "https://inspirationfeed.com/wp-content/uploads/2019/07/Muhammad-Ali-Quotes.jpeg",
+    imageUrl: req.file.path,
     places: [],
     email,
     password,
