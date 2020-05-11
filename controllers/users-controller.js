@@ -1,4 +1,6 @@
 const { validationResult } = require("express-validator");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 
@@ -44,12 +46,23 @@ const createUser = async (req, res, next) => {
     );
     return next(error);
   }
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError(
+      "Could not create user, please try again!",
+      500
+    );
+    return next(error);
+  }
+
   const newUser = new User({
     name,
     imageUrl: req.file.path,
     places: [],
     email,
-    password,
+    password: hashedPassword,
   });
 
   try {
@@ -58,7 +71,26 @@ const createUser = async (req, res, next) => {
     const error = new HttpError("Could not create new user", 500);
     return next(error);
   }
-  res.status(201).json({ user: newUser.toObject({ getters: true }) });
+  let token;
+  try {
+    token = jwt.sign(
+      {
+        userId: newUser.id,
+        email: newUser.email,
+      },
+      "this_is_super_secret_token",
+      {
+        expiresIn: "1h",
+      }
+    );
+  } catch (err) {
+    const error = new HttpError("Could not create new user", 500);
+    return next(error);
+  }
+
+  res
+    .status(201)
+    .json({ userId: newUser.id, email: newUser.email, token: token });
 };
 
 const login = async (req, res, next) => {
@@ -74,12 +106,45 @@ const login = async (req, res, next) => {
     );
     return next(error);
   }
-  if (!user || user.password !== password) {
+  if (!user) {
+    const error = new HttpError("Invalid credetials, could not log in.", 401);
+    return next(error);
+  }
+  let isValid;
+  try {
+    isValid = await bcrypt.compare(password, user.password);
+  } catch (err) {
+    const error = new HttpError(
+      "Could not login. Please check your credentials and try again.",
+      500
+    );
+    return next(error);
+  }
+  if (!isValid) {
     const error = new HttpError("Invalid credetials, could not log in.", 401);
     return next(error);
   }
 
-  res.json({ user: user.toObject({ getters: true }) });
+  let token;
+  try {
+    token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+      },
+      "this_is_super_secret_token",
+      {
+        expiresIn: "1h",
+      }
+    );
+  } catch (err) {
+    const error = new HttpError(
+      "Could not login. Please check your credentials and try again.",
+      500
+    );
+    return next(error);
+  }
+  res.json({ userId: user.id, email: user.email, token: token });
 };
 
 exports.getUsers = getUsers;
