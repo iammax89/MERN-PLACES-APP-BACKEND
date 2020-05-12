@@ -78,7 +78,7 @@ const createUser = async (req, res, next) => {
         userId: newUser.id,
         email: newUser.email,
       },
-      "this_is_super_secret_token",
+      `${process.env.JWT_KEY}`,
       {
         expiresIn: "1h",
       }
@@ -107,7 +107,7 @@ const login = async (req, res, next) => {
     return next(error);
   }
   if (!user) {
-    const error = new HttpError("Invalid credetials, could not log in.", 401);
+    const error = new HttpError("Invalid credetials, could not log in.", 403);
     return next(error);
   }
   let isValid;
@@ -132,7 +132,7 @@ const login = async (req, res, next) => {
         id: user.id,
         email: user.email,
       },
-      "this_is_super_secret_token",
+      `${process.env.JWT_KEY}`,
       {
         expiresIn: "1h",
       }

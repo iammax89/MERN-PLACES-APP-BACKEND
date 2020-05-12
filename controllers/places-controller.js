@@ -64,7 +64,7 @@ const addPlace = async (req, res, next) => {
     );
     return next(error);
   }
-  const { title, describtion, address, creator } = req.body;
+  const { title, describtion, address } = req.body;
   let location;
   try {
     location = await getCoordinatesForAddress(address);
@@ -76,13 +76,13 @@ const addPlace = async (req, res, next) => {
     title,
     describtion,
     address,
-    creator,
+    creator: req.userData.userId,
     location,
     imageUrl: req.file.path,
   });
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData.userId);
   } catch (err) {
     const error = new HttpError("Creating place failed. Please try again", 500);
     return next(error);
@@ -127,6 +127,10 @@ const patchPlace = async (req, res, next) => {
     const error = new HttpError("Could not update the place.", 500);
     return next(error);
   }
+  if (updatedPlace.creator.toString() !== req.userData.userId) {
+    const error = new HttpError("You are not allowed to edit this place.", 401);
+    return next(error);
+  }
   updatedPlace.title = title;
   updatedPlace.describtion = describtion;
   try {
@@ -156,6 +160,13 @@ const deletePlace = async (req, res, next) => {
     return next(error);
   }
 
+  if (place.creator.id !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to delete this place.",
+      401
+    );
+    return next(error);
+  }
   const imagePath = place.imageUrl;
   try {
     const session = await mongoose.startSession();

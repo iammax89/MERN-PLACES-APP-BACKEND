@@ -1,0 +1,9 @@
+{
+  "env": {
+    "MONGODB_USER": "Malyshko",
+    "MONGODB_PASS": "bW4feZsaSR9nw9eQ",
+    "MONGODB_COLLECTION": "places-app",
+    "GOOGLE_API_KEY": "AIzaSyCJGZ4q3h_KoD4XYM3CIGGaEF94NB7RtCc",
+    "JWT_KEY": "this_is_super_secret_token"
+  }
+}

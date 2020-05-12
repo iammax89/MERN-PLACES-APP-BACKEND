@@ -42,7 +42,7 @@ app.use((error, req, res, next) => {
 const mongodbPass = "bW4feZsaSR9nw9eQ";
 mongoose
   .connect(
-    `mongodb+srv://Malyshko:${mongodbPass}@cluster0-qly8b.mongodb.net/places-app?retryWrites=true&w=majority`
+    `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@cluster0-qly8b.mongodb.net/${process.env.MONGODB_COLLECTION}?retryWrites=true&w=majority`
   )
   .then(() =>
     app.listen(5000, () => {
